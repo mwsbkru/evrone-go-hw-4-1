@@ -1,0 +1,2 @@
+https://httpd.apache.org/docs/2.2/en/content-negotiation.html#algorithm
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Content_negotiation
