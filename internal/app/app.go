@@ -10,7 +10,8 @@ import (
 func Run(cfg *config.Config) {
 	urlRepo := repo.NewFileUrlRepo(cfg.InputFile)
 	resultsRepo := repo.NewCsvScrapeResultRepo(cfg.OutputFile)
-	scraper := usecase.NewScraper(urlRepo, resultsRepo)
+	downloader := repo.NewDummyPageDownloader()
+	scraper := usecase.NewScraper(urlRepo, resultsRepo, downloader)
 
 	err := scraper.Scrape()
 	if err != nil {

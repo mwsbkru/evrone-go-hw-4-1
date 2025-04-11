@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"hw_4_1/internal/entity"
 	"hw_4_1/internal/repo"
-	"time"
+	"hw_4_1/internal/service"
 )
 
 type Scraper struct {
 	urlRepo     repo.UrlRepo
 	resultsRepo repo.ScrapeResultsRepo
+	downloader  repo.PageDownloader
 }
 
-func NewScraper(urlRepo repo.UrlRepo, resultsRepo repo.ScrapeResultsRepo) Scraper {
-	return Scraper{urlRepo: urlRepo, resultsRepo: resultsRepo}
+func NewScraper(urlRepo repo.UrlRepo, resultsRepo repo.ScrapeResultsRepo, downloader repo.PageDownloader) Scraper {
+	return Scraper{urlRepo: urlRepo, resultsRepo: resultsRepo, downloader: downloader}
 }
 
 func (s *Scraper) Scrape() error {
@@ -36,18 +37,21 @@ func (s *Scraper) Scrape() error {
 }
 
 func (s *Scraper) processScrape(urls []string) ([]entity.ScrapeResult, error) {
-	result := make([]entity.ScrapeResult, 0, len(urls))
+	results := make([]entity.ScrapeResult, 0, len(urls))
+	urlParser := service.NewHtmlParser()
 
 	for _, url := range urls {
-		scrapeResult := entity.ScrapeResult{
-			Date:           time.Now(),
-			Url:            url,
-			StatusCode:     len(url),
-			Title:          "title",
-			Description:    "descr",
-			SuccessAttempt: 0,
+		body, err := s.downloader.DownloadPage(url)
+		if err != nil {
+			return results, fmt.Errorf("не удалось просканировать переданные url: %w", err)
 		}
-		result = append(result, scrapeResult)
+
+		result, err := urlParser.ParseHtml(body, url)
+		if err != nil {
+			return results, fmt.Errorf("не удалось распарсить тело страницы %s: %w", url, err)
+		}
+
+		results = append(results, result)
 	}
-	return result, nil
+	return results, nil
 }

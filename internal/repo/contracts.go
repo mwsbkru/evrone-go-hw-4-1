@@ -1,6 +1,10 @@
 package repo
 
-import "hw_4_1/internal/entity"
+import (
+	"fmt"
+	"hw_4_1/internal/entity"
+	"io"
+)
 
 type UrlRepo interface {
 	GetUrls() ([]string, error)
@@ -8,4 +12,16 @@ type UrlRepo interface {
 
 type ScrapeResultsRepo interface {
 	SaveResults([]entity.ScrapeResult) error
+}
+
+type PageDownloader interface {
+	DownloadPage(url string) (io.Reader, error)
+}
+
+type NotSuccessResponseCodeError struct {
+	code int
+}
+
+func (e NotSuccessResponseCodeError) Error() string {
+	return fmt.Sprintf("Status code: %d", e.code)
 }
