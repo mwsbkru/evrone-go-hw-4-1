@@ -57,7 +57,8 @@ func (s *Scraper) processScrape(urls []string) ([]entity.ScrapeResult, error) {
 	for _, url := range urls {
 		url := url
 		wg.Add(1)
-		go s.scrapeUrl(ctx, url, 1, &wg, sem, resultChan)
+		scrapeResult := entity.ScrapeResult{Date: time.Now(), Url: url, SuccessAttempt: 1}
+		go s.scrapeUrl(ctx, scrapeResult, &wg, sem, resultChan)
 	}
 
 	go func() {
@@ -71,52 +72,53 @@ func (s *Scraper) processScrape(urls []string) ([]entity.ScrapeResult, error) {
 	return results, nil
 }
 
-func (s *Scraper) scrapeUrl(ctx context.Context, url string, attemptNo int, wg *sync.WaitGroup, sem *semaphore.Weighted, resultChan chan<- entity.ScrapeResult) {
-	if attemptNo > s.cfg.MaxAttemptCount {
-		resultChan <- entity.ScrapeResult{Date: time.Now(), Url: url, StatusCode: 0}
-		wg.Done()
-		return
-	}
-
-	result := entity.ScrapeResult{Date: time.Now(), Url: url, SuccessAttempt: attemptNo}
-	slog.Debug("1. Начало сканирования страницы", slog.String("url", url), slog.Int("Current attempt", attemptNo))
-	err := sem.Acquire(ctx, 1)
-	if err != nil {
-		slog.Error("Не удалось запустить параллельную обработку запросов", slog.String("error", err.Error()), slog.String("url", url), slog.Int("Current attempt", attemptNo))
+func (s *Scraper) scrapeUrl(ctx context.Context, result entity.ScrapeResult, wg *sync.WaitGroup, sem *semaphore.Weighted, resultChan chan<- entity.ScrapeResult) {
+	if result.SuccessAttempt > s.cfg.MaxAttemptCount {
+		result.SuccessAttempt = 0
 		resultChan <- result
 		wg.Done()
 		return
 	}
 
-	body, err := s.downloader.DownloadPage(url)
+	slog.Debug("1. Начало сканирования страницы", slog.String("url", result.Url), slog.Int("Current attempt", result.SuccessAttempt))
+	err := sem.Acquire(ctx, 1)
+	if err != nil {
+		slog.Error("Не удалось запустить параллельную обработку запросов", slog.String("error", err.Error()), slog.String("url", result.Url), slog.Int("Current attempt", result.SuccessAttempt))
+		resultChan <- result
+		wg.Done()
+		return
+	}
+
+	body, err := s.downloader.DownloadPage(result.Url)
 	sem.Release(1)
 	var notSuccessResponseCodeErr repo.NotSuccessResponseCodeError
 	if err != nil {
 		if errors.As(err, &notSuccessResponseCodeErr) {
 			result.StatusCode = notSuccessResponseCodeErr.StatusCode()
-			slog.Error(notSuccessResponseCodeErr.Error(), slog.String("url", url), slog.Int("Current attempt", attemptNo))
+			slog.Error(notSuccessResponseCodeErr.Error(), slog.String("url", result.Url), slog.Int("Current attempt", result.SuccessAttempt))
 		} else {
-			slog.Error("не удалось просканировать переданный url", slog.String("error", err.Error()), slog.String("url", url), slog.Int("Current attempt", attemptNo))
+			slog.Error("не удалось просканировать переданный url", slog.String("error", err.Error()), slog.String("url", result.Url), slog.Int("Current attempt", result.SuccessAttempt))
 		}
 
 		time.AfterFunc(time.Duration(s.cfg.RetryTimeoutSeconds)*time.Second, func() {
-			go s.scrapeUrl(ctx, url, attemptNo+1, wg, sem, resultChan)
+			result.SuccessAttempt++
+			go s.scrapeUrl(ctx, result, wg, sem, resultChan)
 		})
 
 		return
 	}
 	result.StatusCode = http.StatusOK
 
-	slog.Debug("2. Начало парсинга страницы", slog.String("url", url), slog.Int("Current attempt", attemptNo))
+	slog.Debug("2. Начало парсинга страницы", slog.String("url", result.Url), slog.Int("Current attempt", result.SuccessAttempt))
 	pageData, err := s.htmlParser.ParseHtml(body)
 	if err != nil {
-		slog.Error("не удалось распарсить тело страницы", slog.String("error", err.Error()), slog.String("url", url), slog.Int("Current attempt", attemptNo))
+		slog.Error("не удалось распарсить тело страницы", slog.String("error", err.Error()), slog.String("url", result.Url), slog.Int("Current attempt", result.SuccessAttempt))
 		resultChan <- result
 		wg.Done()
 		return
 	}
 
-	slog.Debug("3. Сканирование страницы завершено", slog.String("url", url), slog.Int("Current attempt", attemptNo))
+	slog.Debug("3. Сканирование страницы завершено", slog.String("url", result.Url), slog.Int("Current attempt", result.SuccessAttempt))
 	result.Title = pageData.Title
 	result.Description = pageData.Description
 	resultChan <- result

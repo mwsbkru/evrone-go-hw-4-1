@@ -15,6 +15,7 @@ var pages map[string]string = map[string]string{
 }
 
 type DummyPageDownloader struct {
+	counter int
 }
 
 func NewDummyPageDownloader() *DummyPageDownloader {
@@ -23,6 +24,11 @@ func NewDummyPageDownloader() *DummyPageDownloader {
 
 func (d *DummyPageDownloader) DownloadPage(url string) (io.Reader, error) {
 	time.Sleep(1*time.Second + time.Duration(len(url)*50))
+	d.counter++
+
+	if d.counter%2 != 0 {
+		return nil, NotSuccessResponseCodeError{code: 404}
+	}
 	if page, ok := pages[url]; ok {
 		return strings.NewReader(page), nil
 	}
