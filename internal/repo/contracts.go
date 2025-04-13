@@ -15,7 +15,7 @@ type ScrapeResultsRepo interface {
 }
 
 type PageDownloader interface {
-	DownloadPage(url string) (io.Reader, error)
+	DownloadPage(url string) (io.Reader, io.Closer, error)
 }
 
 type NotSuccessResponseCodeError struct {

@@ -13,16 +13,15 @@ func NewSimplePageDownloader() *SimplePageDownloader {
 	return &SimplePageDownloader{}
 }
 
-func (d *SimplePageDownloader) DownloadPage(url string) (io.Reader, error) {
+func (d *SimplePageDownloader) DownloadPage(url string) (io.Reader, io.Closer, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, fmt.Errorf("не удалось выполнить http-запрос: %w", err)
+		return nil, nil, fmt.Errorf("не удалось выполнить http-запрос: %w", err)
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, NotSuccessResponseCodeError{code: resp.StatusCode}
+		return nil, nil, NotSuccessResponseCodeError{code: resp.StatusCode}
 	}
 
-	return resp.Body, nil
+	return resp.Body, resp.Body, nil
 }

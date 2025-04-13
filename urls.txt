@@ -1,6 +1,6 @@
-https://httpd.apache.org/docs/2.2/en/content-negotiation.html#algorithm
-https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Content_negotiation
-https://apple.com/Content_negotiation
+https://aq.ru/Content_negotiation
+https://sw.ru/Content_negotiation/Content_negotiation
+https://ap.com/Content_negotiation
 https://za.com/Content_negotiation
 https://qwe.com/Content_negotiation
 https://not.found/Content_negotiation

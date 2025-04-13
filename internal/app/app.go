@@ -11,7 +11,7 @@ func Run(cfg *config.Config) {
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	urlRepo := repo.NewFileUrlRepo(cfg.InputFile)
 	resultsRepo := repo.NewCsvScrapeResultRepo(cfg.OutputFile)
-	downloader := repo.NewDummyPageDownloader()
+	downloader := repo.NewSimplePageDownloader()
 	scraper := usecase.NewScraper(*cfg, urlRepo, resultsRepo, downloader)
 
 	err := scraper.Scrape()

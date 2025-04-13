@@ -89,7 +89,12 @@ func (s *Scraper) scrapeUrl(ctx context.Context, result entity.ScrapeResult, wg 
 		return
 	}
 
-	body, err := s.downloader.DownloadPage(result.Url)
+	body, closer, err := s.downloader.DownloadPage(result.Url)
+	defer func() {
+		if closer != nil {
+			closer.Close()
+		}
+	}()
 	sem.Release(1)
 	var notSuccessResponseCodeErr repo.NotSuccessResponseCodeError
 	if err != nil {
@@ -107,6 +112,7 @@ func (s *Scraper) scrapeUrl(ctx context.Context, result entity.ScrapeResult, wg 
 
 		return
 	}
+
 	result.StatusCode = http.StatusOK
 
 	slog.Debug("2. Начало парсинга страницы", slog.String("url", result.Url), slog.Int("Current attempt", result.SuccessAttempt))
