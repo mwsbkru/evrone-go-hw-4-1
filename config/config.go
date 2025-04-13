@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	ParallelRequestsCount int    `env:"PARALLELS" env-default:"2"`
+	RetryTimeoutSeconds   int    `env:"RETRY_TIMEOUT" env-default:"2"`
 	InputFile             string `env:"INPUT" env-default:""`
 	OutputFile            string `env:"OUTPUT" env-default:""`
 }

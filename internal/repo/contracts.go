@@ -25,3 +25,7 @@ type NotSuccessResponseCodeError struct {
 func (e NotSuccessResponseCodeError) Error() string {
 	return fmt.Sprintf("Status code: %d", e.code)
 }
+
+func (e NotSuccessResponseCodeError) StatusCode() int {
+	return e.code
+}
