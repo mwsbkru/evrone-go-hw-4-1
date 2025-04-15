@@ -22,10 +22,10 @@ type NotSuccessResponseCodeError struct {
 	code int
 }
 
-func (e NotSuccessResponseCodeError) Error() string {
+func (e *NotSuccessResponseCodeError) Error() string {
 	return fmt.Sprintf("Status code: %d", e.code)
 }
 
-func (e NotSuccessResponseCodeError) StatusCode() int {
+func (e *NotSuccessResponseCodeError) StatusCode() int {
 	return e.code
 }

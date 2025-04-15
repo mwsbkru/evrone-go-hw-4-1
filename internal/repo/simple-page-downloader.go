@@ -20,7 +20,7 @@ func (d *SimplePageDownloader) DownloadPage(url string) (io.Reader, io.Closer, e
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, nil, NotSuccessResponseCodeError{code: resp.StatusCode}
+		return nil, nil, &NotSuccessResponseCodeError{code: resp.StatusCode}
 	}
 
 	return resp.Body, resp.Body, nil
