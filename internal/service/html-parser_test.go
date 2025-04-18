@@ -11,21 +11,19 @@ import (
 type readerWithError struct {
 }
 
-func (r *readerWithError) Read(buf []byte) (int, error) {
+func (r *readerWithError) Read(_ []byte) (int, error) {
 	return 0, errors.New("reader with error")
 }
 
 func TestHtmlParser_ParseHtml(t *testing.T) {
 	parser := NewHtmlParser()
 
-	type testCase struct {
+	testCases := []struct {
 		name             string
 		input            io.Reader
 		expectedPageData entity.PageData
-		expectError      bool
-	}
-
-	testCases := []testCase{
+		wantError        bool
+	}{
 		{
 			name:  "Normal body",
 			input: strings.NewReader("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\"><html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en\" xml:lang=\"en\"><head><meta name=\"description\" content=\"qwe DESC\"><title>Qwe TITLE</title></head><body id=\"manual-page\"><h1>Qwe</h1></body></html>"),
@@ -51,20 +49,17 @@ func TestHtmlParser_ParseHtml(t *testing.T) {
 			},
 		},
 		{
-			name:        "Reader error",
-			input:       &readerWithError{},
-			expectError: true,
+			name:      "Reader error",
+			input:     &readerWithError{},
+			wantError: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		actualResult, err := parser.ParseHtml(tc.input)
 
-		if err != nil {
-			if !tc.expectError {
-				t.Errorf("Test case - %s: want error", tc.name)
-			}
-			continue
+		if (err != nil) != tc.wantError {
+			t.Errorf("Test case - %s: want error", tc.name)
 		}
 
 		if actualResult != tc.expectedPageData {
