@@ -27,11 +27,11 @@ func (d *DummyPageDownloader) DownloadPage(url string) (io.Reader, io.Closer, er
 	d.counter++
 
 	if d.counter%2 != 0 {
-		return nil, nil, &NotSuccessResponseCodeError{code: 404}
+		return nil, nil, &NotSuccessResponseCodeError{Code: 404}
 	}
 	if page, ok := pages[url]; ok {
 		return strings.NewReader(page), nil, nil
 	}
 
-	return nil, nil, &NotSuccessResponseCodeError{code: 404}
+	return nil, nil, &NotSuccessResponseCodeError{Code: 404}
 }

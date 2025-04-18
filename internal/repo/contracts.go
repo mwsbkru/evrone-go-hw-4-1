@@ -19,13 +19,13 @@ type PageDownloader interface {
 }
 
 type NotSuccessResponseCodeError struct {
-	code int
+	Code int
 }
 
 func (e *NotSuccessResponseCodeError) Error() string {
-	return fmt.Sprintf("Status code: %d", e.code)
+	return fmt.Sprintf("Status Code: %d", e.Code)
 }
 
 func (e *NotSuccessResponseCodeError) StatusCode() int {
-	return e.code
+	return e.Code
 }
